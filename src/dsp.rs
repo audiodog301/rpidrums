@@ -1,6 +1,10 @@
+pub enum Instruction {
+    Freq(f32),
+}
+
 pub struct Sine {
     phase: f32,
-    freq: f32,
+    pub freq: f32,
     sample_rate: f32,
 }
 
@@ -13,7 +17,8 @@ impl Sine {
         }
     }
 
-    pub fn process(&mut self) -> f32 { //lol credit to WeirdConstructor for this code i hate writing oscillators
+    pub fn process(&mut self) -> f32 {
+        //lol credit to WeirdConstructor for this code i hate writing oscillators
         let output = (self.phase * std::f32::consts::TAU).sin();
         self.phase = (self.phase + self.freq / self.sample_rate).fract();
         output

@@ -3,7 +3,7 @@ use cpal::Sample;
 use cpal::StreamConfig;
 
 mod dsp;
-use dsp::{Sine, Instruction, Envelope};
+use dsp::{Instruction, Kick};
 
 fn main() {
     let (command_sender, command_receiver) = crossbeam_channel::bounded(1024);
@@ -27,8 +27,7 @@ fn main() {
         let sample_rate = config.sample_rate.0 as f32;
         let channels = config.channels as usize;
 
-        let mut sine = Sine::new(110.0, sample_rate);
-        let mut envelope = Envelope::new(sample_rate, 0.5);
+        let mut kick = Kick::new(sample_rate);
 
         let stream = device
             .build_output_stream(
@@ -39,14 +38,13 @@ fn main() {
                         while let Ok(instruction) = command_receiver.try_recv() { 
                             match instruction {
                                 Instruction::Kick => {
-                                    envelope.trigger();
+                                    kick.trigger();
                                 }
                             }
                         }
                         
                         for sample in frame.iter_mut() {
-                            *sample = Sample::from(&sine.process());
-                            sine.set_freq(envelope.process() * 125.0);
+                            *sample = Sample::from(&kick.process());
                         }
                     }
                 },

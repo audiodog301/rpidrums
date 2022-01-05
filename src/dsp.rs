@@ -36,13 +36,13 @@ pub struct Envelope {
     val: f32,
 }
 
-impl Envelope{
+impl Envelope {
     pub fn new(sample_rate: f32, decay: f32) -> Self {
         Self {
             sample_rate,
             decay,
             counter: 0,
-            val: 1.0,
+            val: 0.0,
         }
     }
 
@@ -61,7 +61,26 @@ impl Envelope{
         self.val
     }
 }
-// pub struct Kick {
-//     osc: Sine,
+pub struct Kick {
+    osc: Sine,
+    env: Envelope,
+}
 
-// }
+impl Kick {
+    pub fn new(sample_rate: f32) -> Self {
+        Self {
+            osc: Sine::new(150.0, sample_rate),
+            env: Envelope::new(sample_rate, 0.35)
+        }
+    }
+
+    pub fn process(&mut self) -> f32 {
+        self.osc.set_freq(self.env.process() * 150.0);
+        self.env.process();
+        self.osc.process()
+    }
+
+    pub fn trigger(&mut self) {
+        self.env.trigger();
+    }
+}

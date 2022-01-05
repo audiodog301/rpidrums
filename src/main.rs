@@ -3,12 +3,10 @@ use cpal::Sample;
 use cpal::StreamConfig;
 
 mod dsp;
-use dsp::{Sine, Instruction};
+use dsp::{Sine, Instruction, Envelope};
 
 fn main() {
     let (command_sender, command_receiver) = crossbeam_channel::bounded(1024);
-    
-    let mut frequency: f32 = 110.0;
     
     std::thread::spawn(move || {
         let host = cpal::default_host();
@@ -29,7 +27,8 @@ fn main() {
         let sample_rate = config.sample_rate.0 as f32;
         let channels = config.channels as usize;
 
-        let mut sine = Sine::new(frequency, sample_rate);
+        let mut sine = Sine::new(110.0, sample_rate);
+        let mut envelope = Envelope::new(sample_rate, 0.5);
 
         let stream = device
             .build_output_stream(
@@ -39,14 +38,15 @@ fn main() {
                          // Try to receive a message from the gui thread
                         while let Ok(instruction) = command_receiver.try_recv() { 
                             match instruction {
-                                Instruction::Freq(f) => {
-                                    sine.freq = f;
+                                Instruction::Kick => {
+                                    envelope.trigger();
                                 }
                             }
                         }
                         
                         for sample in frame.iter_mut() {
                             *sample = Sample::from(&sine.process());
+                            sine.set_freq(envelope.process() * 125.0);
                         }
                     }
                 },
@@ -62,8 +62,7 @@ fn main() {
     });
 
     loop {
-        command_sender.send(Instruction::Freq(frequency));
-        frequency += 25.0;
-        std::thread::sleep(std::time::Duration::from_millis(250));
+        command_sender.send(Instruction::Kick);
+        std::thread::sleep(std::time::Duration::from_millis(500));
     }
 }

@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 cpal = "0.13.4"
 crossbeam-channel = "0.5.0"
+rand = "0.8.4"
+hound = "3.4.0"

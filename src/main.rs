@@ -3,7 +3,7 @@ use cpal::Sample;
 use cpal::StreamConfig;
 
 mod dsp;
-use dsp::{Instruction, Kick};
+use dsp::{Instruction, Kick, Hat, Sampler};
 
 fn main() {
     let (command_sender, command_receiver) = crossbeam_channel::bounded(1024);
@@ -28,6 +28,8 @@ fn main() {
         let channels = config.channels as usize;
 
         let mut kick = Kick::new(sample_rate);
+        let mut hat = Hat::new(sample_rate);
+        let mut sampler = Sampler::new("clap.wav");
 
         let stream = device
             .build_output_stream(
@@ -39,12 +41,18 @@ fn main() {
                             match instruction {
                                 Instruction::Kick => {
                                     kick.trigger();
+                                },
+                                Instruction::Hat => {
+                                    hat.trigger();
+                                }
+                                Instruction::Sample => {
+                                    sampler.trigger();
                                 }
                             }
                         }
                         
                         for sample in frame.iter_mut() {
-                            *sample = Sample::from(&kick.process());
+                            *sample = Sample::from(&(hat.process() + kick.process() + sampler.process()));
                         }
                     }
                 },
@@ -61,6 +69,13 @@ fn main() {
 
     loop {
         command_sender.send(Instruction::Kick);
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        command_sender.send(Instruction::Hat);
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        command_sender.send(Instruction::Sample);
+        command_sender.send(Instruction::Hat);
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        command_sender.send(Instruction::Hat);
+        std::thread::sleep(std::time::Duration::from_millis(150));
     }
 }

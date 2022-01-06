@@ -86,7 +86,7 @@ impl Kick {
     pub fn process(&mut self) -> f32 {
         self.osc.set_freq(self.env.process() * 150.0);
         self.env.process();
-        self.osc.process()
+        self.osc.process() / 2.3
     }
 
     pub fn trigger(&mut self) {
@@ -178,7 +178,7 @@ impl Sampler {
         let mut reader = hound::WavReader::open(filename).unwrap();
         let mut buffer: Vec<f32> = Vec::new();
         for sample in reader.samples::<i32>() {
-            buffer.push(((sample.unwrap() as f32) / (100000000 as f32)))
+            buffer.push(((sample.unwrap() as f32) / (i32::MAX as f32)))
         }
         let len = buffer.len();
         Self {

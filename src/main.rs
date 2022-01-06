@@ -3,7 +3,7 @@ use cpal::Sample;
 use cpal::StreamConfig;
 
 mod dsp;
-use dsp::{Instruction, Kick, Hat, Sampler};
+use dsp::{Instruction, Kick, Hat, Sampler, Sine};
 
 fn main() {
     let (command_sender, command_receiver) = crossbeam_channel::bounded(1024);
@@ -30,6 +30,7 @@ fn main() {
         let mut kick = Kick::new(sample_rate);
         let mut hat = Hat::new(sample_rate);
         let mut sampler = Sampler::new("clap.wav");
+        let mut sine = Sine::new(250.0, sample_rate);
 
         let stream = device
             .build_output_stream(
@@ -52,7 +53,7 @@ fn main() {
                         }
                         
                         for sample in frame.iter_mut() {
-                            *sample = Sample::from(&(hat.process() + kick.process() + sampler.process()));
+                            *sample = Sample::from(&(hat.process()));
                         }
                     }
                 },
